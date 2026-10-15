@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { ArrowRight, Info, Leaf, LogOut, X } from 'lucide-react'
 import { API_URL, USE_MOCK } from '../api/api'
@@ -36,7 +37,7 @@ function initials(name = '') {
 }
 
 function AiStatusModal({ onClose }) {
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex animate-fade-in items-center justify-center bg-ink/40 p-4 backdrop-blur-sm"
       role="dialog"
@@ -72,7 +73,8 @@ function AiStatusModal({ onClose }) {
           and publish.
         </p>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

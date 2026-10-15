@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { RotateCcw } from 'lucide-react'
 
 function UndoToast({ message, onUndo, onTimeout, duration = 6000 }) {
@@ -7,7 +8,7 @@ function UndoToast({ message, onUndo, onTimeout, duration = 6000 }) {
     return () => clearTimeout(timer)
   }, [onTimeout, duration])
 
-  return (
+  return createPortal(
     <div className="no-print fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
       <div
         role="status"
@@ -28,7 +29,8 @@ function UndoToast({ message, onUndo, onTimeout, duration = 6000 }) {
           aria-hidden="true"
         />
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

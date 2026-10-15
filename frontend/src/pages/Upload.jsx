@@ -15,6 +15,7 @@ import {
   Upload as UploadIcon,
 } from 'lucide-react'
 import api, { getErrorMessage } from '../api/api'
+import CameraCapture from '../components/CameraCapture'
 import { useAuth } from '../context/AuthContext'
 import { CURRENCIES, CURRENCY_SYMBOLS, DEFAULT_CURRENCY } from '../utils/constants'
 
@@ -79,6 +80,7 @@ function Upload() {
   const [name, setName] = useState('')
   const [currency, setCurrency] = useState(DEFAULT_CURRENCY)
   const [file, setFile] = useState(null)
+  const [cameraOpen, setCameraOpen] = useState(false)
   const [previewUrl, setPreviewUrl] = useState('')
   const [dragging, setDragging] = useState(false)
   const [errors, setErrors] = useState({})
@@ -99,6 +101,15 @@ function Upload() {
     setErrors((current) => ({ ...current, file: '' }))
     setFile(candidate)
     setPreviewUrl(URL.createObjectURL(candidate))
+  }
+
+  function openCamera() {
+    const isPhone = window.matchMedia('(pointer: coarse)').matches
+    if (isPhone || !navigator.mediaDevices?.getUserMedia) {
+      cameraInput.current.click()
+      return
+    }
+    setCameraOpen(true)
   }
 
   function handleDrop(event) {
@@ -331,12 +342,12 @@ function Upload() {
                 <button type="button" className={`btn btn-sm ${file ? 'btn-secondary' : 'btn-primary'}`} onClick={() => fileInput.current.click()}>
                   <UploadIcon size={14} aria-hidden="true" /> {file ? 'Choose a different image' : 'Choose image'}
                 </button>
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => cameraInput.current.click()}>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={openCamera}>
                   <Camera size={14} aria-hidden="true" /> Use camera
                 </button>
               </div>
               <p className="mt-3 text-[11px] text-muted">
-                Camera capture is available on supported mobile devices. JPG, PNG or WebP, up to {MAX_SIZE_MB} MB.
+                Use your phone or laptop camera. JPG, PNG or WebP, up to {MAX_SIZE_MB} MB.
               </p>
               <input
                 ref={fileInput}
@@ -362,6 +373,15 @@ function Upload() {
                   event.target.value = ''
                 }}
               />
+              {cameraOpen && (
+                <CameraCapture
+                  onClose={() => setCameraOpen(false)}
+                  onCapture={(photo) => {
+                    setCameraOpen(false)
+                    chooseFile(photo)
+                  }}
+                />
+              )}
             </div>
             {errors.file && (
               <p className="mt-1.5 text-xs font-medium text-danger-text" role="alert">

@@ -2,7 +2,7 @@ import axios from 'axios'
 import { TOKEN_KEY } from '../utils/constants'
 import { mockApi } from './mockApi'
 
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api'
 
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 

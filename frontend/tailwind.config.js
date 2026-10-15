@@ -19,7 +19,7 @@ export default {
       keyframes: {
         'fade-up': {
           from: { opacity: '0', transform: 'translateY(12px)' },
-          to: { opacity: '1', transform: 'translateY(0)' },
+          to: { opacity: '1', transform: 'none' },
         },
         'fade-in': {
           from: { opacity: '0' },
@@ -27,7 +27,7 @@ export default {
         },
         'scale-in': {
           from: { opacity: '0', transform: 'scale(0.96)' },
-          to: { opacity: '1', transform: 'scale(1)' },
+          to: { opacity: '1', transform: 'none' },
         },
         'slide-in-right': {
           from: { transform: 'translateX(100%)' },

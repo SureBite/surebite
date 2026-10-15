@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { ImageOff, Maximize2, X, ZoomIn, ZoomOut } from 'lucide-react'
 
 const MIN_ZOOM = 100
@@ -80,7 +81,8 @@ function ImageInspector({ imageUrl, alt = 'Original menu photo', caption }) {
       )}
       {caption && <p className="mt-2 text-xs text-muted">{caption}</p>}
 
-      {open && (
+      {open &&
+        createPortal(
         <div className="fixed inset-0 z-50 flex animate-fade-in justify-end bg-ink/40 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Original menu" onClick={() => setOpen(false)}>
           <div className="flex h-full w-full max-w-3xl animate-slide-in-right flex-col gap-3 bg-cream p-4 shadow-xl" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-center justify-between">
@@ -92,8 +94,9 @@ function ImageInspector({ imageUrl, alt = 'Original menu photo', caption }) {
             <ZoomableImage imageUrl={imageUrl} alt={alt} zoom={drawerZoom} className="min-h-0 flex-1" />
             <ZoomControls zoom={drawerZoom} setZoom={setDrawerZoom} />
           </div>
-        </div>
-      )}
+        </div>,
+          document.body,
+        )}
     </div>
   )
 }
