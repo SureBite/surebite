@@ -99,7 +99,7 @@ function sanitizeDishes(rawDishes) {
   });
 }
 
-export const extractMenuData = async (imagePath) => {
+export const extractMenuData = async (imageInput, mimeType = 'image/jpeg') => {
   const apiKey = (process.env.GEMINI_API_KEY || '').trim();
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY is not defined in backend/.env');
@@ -107,9 +107,19 @@ export const extractMenuData = async (imagePath) => {
 
   const genAI = new GoogleGenerativeAI(apiKey);
 
-  const imageAsBase64 = fs.readFileSync(imagePath).toString('base64');
-  const ext = path.extname(imagePath).toLowerCase();
-  const mimeType = ext === '.webp' ? 'image/webp' : ext === '.png' ? 'image/png' : 'image/jpeg';
+  let imageAsBase64;
+  let detectedMime = mimeType;
+
+  if (Buffer.isBuffer(imageInput)) {
+    imageAsBase64 = imageInput.toString('base64');
+    detectedMime = mimeType || 'image/jpeg';
+  } else if (typeof imageInput === 'string') {
+    imageAsBase64 = fs.readFileSync(imageInput).toString('base64');
+    const ext = path.extname(imageInput).toLowerCase();
+    detectedMime = ext === '.webp' ? 'image/webp' : ext === '.png' ? 'image/png' : 'image/jpeg';
+  } else {
+    throw new Error('Invalid image input: expected a Buffer or file path string.');
+  }
 
   const prompt = `
 You are an expert restaurant menu digitizer specializing in Indian and global cuisine.
@@ -131,9 +141,9 @@ Each dish object MUST strictly include:
 Return ONLY a raw JSON array. Do not include markdown code block formatting or commentary.
 `;
 
-  // Model cascade: Primary target is gemini-3.8-flash (recommended flagship free model),
-  // with automated fallback to gemini-3.7-flash and gemini-3.5-flash-lite during free-tier capacity spikes.
-  const modelsToTry = ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash-lite'];
+  // Model cascade: Primary target is gemini-3.5-flash (fast, highly reliable),
+  // with automated fallback to gemini-3.5-flash-lite, gemini-3.8-flash, and gemini-3.7-flash.
+  const modelsToTry = ['gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-3.7-flash'];
   let lastError;
 
   for (const modelName of modelsToTry) {
@@ -148,7 +158,7 @@ Return ONLY a raw JSON array. Do not include markdown code block formatting or c
 
       const result = await model.generateContent([
         prompt,
-        { inlineData: { data: imageAsBase64, mimeType } },
+        { inlineData: { data: imageAsBase64, mimeType: detectedMime } },
       ]);
 
       const responseText = result.response.text();

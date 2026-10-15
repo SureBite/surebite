@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid';
 import Menu from '../models/Menu.js';
 import { extractMenuData } from '../services/geminiService.js';
+import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinary.js';
 import QRCode from 'qrcode';
 
 // GET /api/menus - List the logged-in manager's menus
@@ -21,24 +22,28 @@ export const uploadAndExtract = async (req, res) => {
 
     const { name, currency } = req.body;
     
-    // 1. Send the saved file to Gemini
-    const extractedDishes = await extractMenuData(req.file.path);
+    // 1. Upload the image directly to Cloudinary and extract dishes with Gemini concurrently
+    const [cloudinaryResult, extractedDishes] = await Promise.all([
+      uploadToCloudinary(req.file.buffer, { folder: 'surebite/menus' }),
+      extractMenuData(req.file.buffer, req.file.mimetype),
+    ]);
 
     // 2. Map the dishes to our database schema
-    const formattedItems = extractedDishes.map(dish => ({
+    const formattedItems = extractedDishes.map((dish) => ({
       ...dish,
       aiInferred: true,
-      isVerified: false
+      isVerified: false,
     }));
 
-    // 3. Save the draft to MongoDB
+    // 3. Save the draft to MongoDB using Cloudinary's secure URL
     const newMenu = await Menu.create({
       owner: req.user._id,
       name: name || 'New Draft',
       currency: currency || 'INR',
       status: 'draft',
-      imageUrl: `/${req.file.path.replace(/\\/g, '/')}`, // Make path web-friendly
-      items: formattedItems
+      imageUrl: cloudinaryResult.secure_url,
+      cloudinaryPublicId: cloudinaryResult.public_id,
+      items: formattedItems,
     });
 
     return res.status(201).json({ menu: newMenu });
@@ -154,6 +159,13 @@ export const deleteMenu = async (req, res) => {
     
     if (!menu) {
       return res.status(404).json({ message: 'Menu not found.' });
+    }
+
+    // Clean up uploaded image in Cloudinary if available
+    if (menu.cloudinaryPublicId) {
+      deleteFromCloudinary(menu.cloudinaryPublicId).catch((err) =>
+        console.warn('Failed to delete image from Cloudinary:', err.message)
+      );
     }
 
     return res.status(200).json({ success: true });

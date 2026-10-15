@@ -74,6 +74,10 @@ const menuSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    cloudinaryPublicId: {
+      type: String,
+      default: null,
+    },
     items: [menuItemSchema],
     publishedAt: {
       type: Date,
