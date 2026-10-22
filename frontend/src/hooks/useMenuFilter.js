@@ -6,6 +6,9 @@ export function filterDishes(items, { dietaryPreference, selectedAllergens, filt
     if (dietaryPreference === 'veg' && itemDietary !== 'veg') {
       return false
     }
+    if (dietaryPreference === 'egg' && itemDietary !== 'egg') {
+      return false
+    }
     if (dietaryPreference === 'non_veg' && itemDietary !== 'non_veg') {
       return false
     }

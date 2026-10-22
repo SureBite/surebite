@@ -3,12 +3,17 @@ import User from '../models/User.js';
 
 export const authenticateToken = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    let token = req.cookies?.token;
+
+    // Fallback to Bearer token in Authorization header
+    if (!token && req.headers.authorization?.startsWith('Bearer ')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (!token) {
       return res.status(401).json({ message: 'Unauthorized: No token provided.' });
     }
 
-    const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const user = await User.findById(decoded.id).select('-password');

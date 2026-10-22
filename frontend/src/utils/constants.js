@@ -34,8 +34,8 @@ export const ALLERGEN_LABELS = {
 
 export const DIETARY_TYPES = ['veg', 'non_veg', 'egg']
 export const DIETARY_LABELS = { veg: 'Veg', non_veg: 'Non-Veg', egg: 'Egg' }
-export const DIETARY_PREFERENCES = ['all', 'veg', 'non_veg']
-export const DIETARY_PREFERENCE_LABELS = { all: 'All', veg: 'Veg', non_veg: 'Non-Veg' }
+export const DIETARY_PREFERENCES = ['all', 'veg', 'egg', 'non_veg']
+export const DIETARY_PREFERENCE_LABELS = { all: 'All', veg: 'Veg', egg: 'Egg', non_veg: 'Non-Veg' }
 
 export const FILTER_MODES = ['hide', 'mark']
 

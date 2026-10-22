@@ -3,6 +3,8 @@ import { Link, Navigate, Outlet, Route, Routes, useLocation } from 'react-router
 import Navbar from './components/Navbar'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Auth from './pages/Auth'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
 import DinerMenu from './pages/DinerMenu'
 import Home from './pages/Home'
@@ -85,6 +87,9 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/reset-password" element={<ForgotPassword />} />
           <Route path="/m/:slug" element={<DinerMenu />} />
 
           <Route element={<ManagerLayout />}>

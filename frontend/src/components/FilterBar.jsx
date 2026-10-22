@@ -40,7 +40,7 @@ function FilterBar({
           onChange={setDietaryPreference}
           options={DIETARY_PREFERENCES.map((value) => ({ value, label: DIETARY_PREFERENCE_LABELS[value] }))}
         />
-        <p className="mt-2 text-xs text-muted">Veg excludes egg dishes. Non-Veg shows meat and fish only.</p>
+        <p className="mt-2 text-xs text-muted">Veg excludes egg and meat. Egg shows egg dishes. Non-Veg shows meat and fish.</p>
       </section>
 
       <section className="card p-4">

@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema(
     name: {
       type: String,
       required: [true, 'Name is required'],
+      minlength: [2, 'Manager name must be more than 1 letter'],
       trim: true,
     },
     email: {
@@ -23,6 +24,7 @@ const userSchema = new mongoose.Schema(
     restaurantName: {
       type: String,
       required: [true, 'Restaurant name is required'],
+      minlength: [2, 'Restaurant name must be more than 1 letter'],
       trim: true,
     },
     restaurantSlug: {
@@ -30,6 +32,18 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    resetPasswordToken: {
+      type: String,
+      select: false,
+    },
+    resetPasswordExpires: {
+      type: Date,
+      select: false,
     },
   },
   { timestamps: true }

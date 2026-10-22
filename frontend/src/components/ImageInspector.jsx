@@ -42,10 +42,16 @@ function ZoomableImage({ imageUrl, alt, zoom, className }) {
   )
 }
 
-function ImageInspector({ imageUrl, alt = 'Original menu photo', caption }) {
+function ImageInspector({ imageUrl, images = [], alt = 'Original menu photo', caption }) {
   const [zoom, setZoom] = useState(100)
   const [open, setOpen] = useState(false)
   const [drawerZoom, setDrawerZoom] = useState(100)
+  const [currentIndex, setCurrentIndex] = useState(0)
+
+  const list = images?.length
+    ? images.map((img) => (typeof img === 'string' ? img : img?.url)).filter(Boolean)
+    : (imageUrl ? [imageUrl] : [])
+  const currentImg = list[currentIndex] || imageUrl || ''
 
   useEffect(() => {
     if (!open) return
@@ -54,20 +60,41 @@ function ImageInspector({ imageUrl, alt = 'Original menu photo', caption }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [open])
 
+  const pageSelector = list.length > 1 && (
+    <div className="mb-2 flex items-center gap-1.5 overflow-x-auto text-xs">
+      <span className="font-medium text-muted">Page:</span>
+      {list.map((_, i) => (
+        <button
+          key={i}
+          type="button"
+          onClick={() => setCurrentIndex(i)}
+          className={`pill px-2.5 py-0.5 text-xs font-medium transition-colors ${
+            currentIndex === i ? 'bg-brand text-white' : 'bg-brand-soft text-ink hover:bg-brand-tint'
+          }`}
+          aria-label={`View page ${i + 1}`}
+        >
+          {i + 1}
+        </button>
+      ))}
+    </div>
+  )
+
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
         <h2 className="font-sans text-sm font-semibold tracking-normal">Original menu</h2>
-        {imageUrl && (
+        {currentImg && (
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => setOpen(true)} aria-label="Open the original menu in a larger view">
             <Maximize2 size={14} />
           </button>
         )}
       </div>
 
-      {imageUrl ? (
+      {pageSelector}
+
+      {currentImg ? (
         <>
-          <ZoomableImage imageUrl={imageUrl} alt={alt} zoom={zoom} className="max-h-[32rem]" />
+          <ZoomableImage imageUrl={currentImg} alt={`${alt} (Page ${currentIndex + 1})`} zoom={zoom} className="max-h-[32rem]" />
           <div className="mt-2">
             <ZoomControls zoom={zoom} setZoom={setZoom} />
           </div>
@@ -91,7 +118,8 @@ function ImageInspector({ imageUrl, alt = 'Original menu photo', caption }) {
                 <X size={14} /> Close
               </button>
             </div>
-            <ZoomableImage imageUrl={imageUrl} alt={alt} zoom={drawerZoom} className="min-h-0 flex-1" />
+            {pageSelector}
+            <ZoomableImage imageUrl={currentImg} alt={`${alt} (Page ${currentIndex + 1})`} zoom={drawerZoom} className="min-h-0 flex-1" />
             <ZoomControls zoom={drawerZoom} setZoom={setDrawerZoom} />
           </div>
         </div>,

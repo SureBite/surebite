@@ -16,8 +16,8 @@ const router = express.Router();
 // Get all menus for the dashboard
 router.get('/', authenticateToken, getUserMenus);
 
-// Upload and trigger Gemini AI (Results in POST /api/menus/upload)
-router.post('/upload', authenticateToken, upload.single('image'), uploadAndExtract);
+// Upload and trigger Gemini AI (Supports single or multiple images)
+router.post('/upload', authenticateToken, upload.any(), uploadAndExtract);
 
 // Fetch a single menu for the Verification Dashboard
 router.get('/:id', authenticateToken, getMenuById);

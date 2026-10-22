@@ -152,9 +152,11 @@ function ownerView(menu) {
   return rest
 }
 
+let mockSessionUserId = null
+
 function requireUser(db) {
   const token = localStorage.getItem(TOKEN_KEY) || ''
-  const user = db.users.find((candidate) => token === `mock.${candidate._id}`)
+  const user = db.users.find((candidate) => candidate._id === mockSessionUserId || token === `mock.${candidate._id}`)
   if (!user) throw fail(401, 'Please sign in again.')
   return user
 }
@@ -213,20 +215,66 @@ export const mockApi = {
       if (!data.name || !email || !data.password || !data.restaurantName) {
         throw fail(400, 'Name, restaurant name, email and password are required.')
       }
-      if (db.users.some((user) => user.email === email)) {
+      if (db.users.some((user) => user.email === email && user.isVerified !== false)) {
         throw fail(409, 'An account with this email already exists.')
       }
-      const user = {
-        _id: objectId(),
-        name: data.name.trim(),
-        email,
-        password: data.password,
-        restaurantName: data.restaurantName.trim(),
-        restaurantSlug: `${slugify(data.restaurantName)}-${randomString(4, 'abcdefghijklmnopqrstuvwxyz')}`,
+      let user = db.users.find((u) => u.email === email && u.isVerified === false)
+      if (user) {
+        user.name = data.name.trim()
+        user.password = data.password
+        user.restaurantName = data.restaurantName.trim()
+      } else {
+        user = {
+          _id: objectId(),
+          name: data.name.trim(),
+          email,
+          password: data.password,
+          restaurantName: data.restaurantName.trim(),
+          restaurantSlug: `${slugify(data.restaurantName)}-${randomString(4, 'abcdefghijklmnopqrstuvwxyz')}`,
+          isVerified: false,
+        }
+        db.users.push(user)
       }
-      db.users.push(user)
+      db.otps = (db.otps || []).filter((o) => o.email !== email)
+      db.otps.push({ email, otp: '123456', expiresAt: Date.now() + 600000 })
       writeDb(db)
-      return { token: `mock.${user._id}`, user: publicUser(user) }
+      return {
+        token: `mock.${user._id}`,
+        user: publicUser(user),
+      }
+    },
+
+    async verifyOtp(data) {
+      await wait(400)
+      const db = readDb()
+      const email = String(data.email || '').trim().toLowerCase()
+      const cleanOtp = String(data.otp || '').trim()
+      const user = db.users.find((u) => u.email === email)
+      if (!user) throw fail(404, 'User not found.')
+
+      const otpEntry = (db.otps || []).find((o) => o.email === email && (o.otp === cleanOtp || cleanOtp === '123456'))
+      if (!otpEntry) throw fail(400, 'Invalid or expired OTP.')
+
+      user.isVerified = true
+      mockSessionUserId = user._id
+      writeDb(db)
+      return {
+        message: 'Account verified successfully.',
+        token: `mock.${user._id}`,
+        user: publicUser(user),
+      }
+    },
+
+    async resendOtp(data) {
+      await wait(300)
+      const db = readDb()
+      const email = String(data.email || '').trim().toLowerCase()
+      const user = db.users.find((u) => u.email === email)
+      if (!user) throw fail(404, 'User not found.')
+      db.otps = (db.otps || []).filter((o) => o.email !== email)
+      db.otps.push({ email, otp: '123456', expiresAt: Date.now() + 600000 })
+      writeDb(db)
+      return { message: 'A new 6-digit OTP has been sent.' }
     },
 
     async login(data) {
@@ -235,7 +283,42 @@ export const mockApi = {
       const email = String(data.email || '').trim().toLowerCase()
       const user = db.users.find((candidate) => candidate.email === email)
       if (!user || user.password !== data.password) throw fail(401, 'Incorrect email or password.')
+      mockSessionUserId = user._id
       return { token: `mock.${user._id}`, user: publicUser(user) }
+    },
+
+    async logout() {
+      await wait(150)
+      mockSessionUserId = null
+      return { message: 'Logged out successfully.' }
+    },
+
+    async forgotPassword(data) {
+      await wait(400)
+      const db = readDb()
+      const email = String(data.email || '').trim().toLowerCase()
+      const user = db.users.find((u) => u.email === email)
+      if (user) {
+        db.resetTokens = (db.resetTokens || []).filter((r) => r.email !== email)
+        db.resetTokens.push({ email, token: 'mock-reset-token-123', expiresAt: Date.now() + 900000 })
+        writeDb(db)
+      }
+      return { message: 'If an account with that email exists, a password reset link has been sent.' }
+    },
+
+    async resetPassword(token, data) {
+      await wait(400)
+      const db = readDb()
+      const newPassword = String(data?.password || '')
+      if (newPassword.length < 8) throw fail(400, 'Password must be at least 8 characters.')
+      const entry = (db.resetTokens || []).find((r) => r.token === token)
+      if (!entry && token !== 'mock-reset-token-123') {
+        throw fail(400, 'Invalid or expired password reset token.')
+      }
+      const user = db.users.find((u) => u.email === entry?.email) || db.users[0]
+      if (user) user.password = newPassword
+      writeDb(db)
+      return { message: 'Password reset successful.' }
     },
 
     async getMe() {
@@ -255,15 +338,17 @@ export const mockApi = {
     async upload(formData) {
       const db = readDb()
       const user = requireUser(db)
-      const file = formData.get('image')
+      const files = [...formData.getAll('image'), ...formData.getAll('images')].filter((f) => f && typeof f !== 'string')
+      const file = files[0]
       const name = String(formData.get('name') || '').trim()
       const currency = String(formData.get('currency') || DEFAULT_CURRENCY)
-      if (!file || typeof file === 'string') throw fail(400, 'Choose a menu photo to upload.')
+      if (!file) throw fail(400, 'Choose a menu photo to upload.')
       if (!CURRENCIES.includes(currency)) throw fail(400, 'Unsupported currency.')
 
       const imageUrl = await readImage(file)
+      const imageUrls = await Promise.all(files.map(readImage))
       await wait(2600)
-      if (/fail/i.test(file.name)) throw fail(422, 'The extraction service didn’t return a usable draft.')
+      if (files.some((f) => /fail/i.test(f.name))) throw fail(422, 'The extraction service didn’t return a usable draft.')
 
       const now = new Date().toISOString()
       const menu = {
@@ -272,6 +357,7 @@ export const mockApi = {
         name: name || 'Untitled menu',
         slug: '',
         imageUrl,
+        images: imageUrls.map((url) => ({ url, publicId: null })),
         status: 'draft',
         currency,
         items: extractedItems(0),

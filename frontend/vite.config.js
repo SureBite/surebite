@@ -8,6 +8,6 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: './src/test/setup.js',
-    env: { VITE_USE_MOCK: 'true' },
+    env: { VITE_USE_MOCK: 'false' },
   },
 })

@@ -1,17 +1,14 @@
 import axios from 'axios'
-import { TOKEN_KEY } from '../utils/constants'
 import { mockApi } from './mockApi'
 
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api'
 
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
-const http = axios.create({ baseURL: API_URL })
-
-http.interceptors.request.use((config) => {
-  const token = localStorage.getItem(TOKEN_KEY)
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config
+// Globally configure Axios with withCredentials: true so cookies are automatically attached
+const http = axios.create({
+  baseURL: API_URL,
+  withCredentials: true,
 })
 
 const body = (response) => response.data
@@ -19,8 +16,13 @@ const body = (response) => response.data
 const realApi = {
   auth: {
     register: (data) => http.post('/auth/register', data).then(body),
+    verifyOtp: (data) => http.post('/auth/verify-otp', data).then(body),
+    resendOtp: (data) => http.post('/auth/resend-otp', data).then(body),
     login: (data) => http.post('/auth/login', data).then(body),
+    logout: () => http.post('/auth/logout').then(body),
     getMe: () => http.get('/auth/me').then(body),
+    forgotPassword: (data) => http.post('/auth/forgot-password', data).then(body),
+    resetPassword: (token, data) => http.post(`/auth/reset-password/${token}`, data).then(body),
   },
   menus: {
     getAll: () => http.get('/menus').then(body),

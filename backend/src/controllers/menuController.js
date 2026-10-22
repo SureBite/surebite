@@ -16,16 +16,17 @@ export const getUserMenus = async (req, res) => {
 
 export const uploadAndExtract = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'Please upload a menu image.' });
+    const files = req.files?.length ? req.files : (req.file ? [req.file] : []);
+    if (!files.length) {
+      return res.status(400).json({ message: 'Please upload at least one menu image.' });
     }
 
     const { name, currency } = req.body;
     
-    // 1. Upload the image directly to Cloudinary and extract dishes with Gemini concurrently
-    const [cloudinaryResult, extractedDishes] = await Promise.all([
-      uploadToCloudinary(req.file.buffer, { folder: 'surebite/menus' }),
-      extractMenuData(req.file.buffer, req.file.mimetype),
+    // 1. Upload all images to Cloudinary and extract dishes with Gemini concurrently
+    const [cloudinaryResults, extractedDishes] = await Promise.all([
+      Promise.all(files.map((file) => uploadToCloudinary(file.buffer, { folder: 'surebite/menus' }))),
+      extractMenuData(files),
     ]);
 
     // 2. Map the dishes to our database schema
@@ -35,14 +36,19 @@ export const uploadAndExtract = async (req, res) => {
       isVerified: false,
     }));
 
-    // 3. Save the draft to MongoDB using Cloudinary's secure URL
+    // 3. Save draft to MongoDB with primary image and all image records
+    const primary = cloudinaryResults[0];
     const newMenu = await Menu.create({
       owner: req.user._id,
-      name: name || 'New Draft',
+      name: name?.trim() || 'New Draft',
       currency: currency || 'INR',
       status: 'draft',
-      imageUrl: cloudinaryResult.secure_url,
-      cloudinaryPublicId: cloudinaryResult.public_id,
+      imageUrl: primary.secure_url,
+      cloudinaryPublicId: primary.public_id,
+      images: cloudinaryResults.map((r) => ({
+        url: r.secure_url,
+        publicId: r.public_id,
+      })),
       items: formattedItems,
     });
 
@@ -161,12 +167,17 @@ export const deleteMenu = async (req, res) => {
       return res.status(404).json({ message: 'Menu not found.' });
     }
 
-    // Clean up uploaded image in Cloudinary if available
-    if (menu.cloudinaryPublicId) {
-      deleteFromCloudinary(menu.cloudinaryPublicId).catch((err) =>
+    // Clean up all uploaded images in Cloudinary
+    const publicIds = [
+      ...(menu.images?.map((img) => img.publicId) || []),
+      menu.cloudinaryPublicId,
+    ].filter(Boolean);
+
+    [...new Set(publicIds)].forEach((id) =>
+      deleteFromCloudinary(id).catch((err) =>
         console.warn('Failed to delete image from Cloudinary:', err.message)
-      );
-    }
+      )
+    );
 
     return res.status(200).json({ success: true });
   } catch (error) {
