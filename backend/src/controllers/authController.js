@@ -284,7 +284,7 @@ export const forgotPassword = async (req, res) => {
       await user.save();
 
       // Email the user a reset URL formatted like http://localhost:5173/reset-password/<plain_token>
-      const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+      const clientUrl = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, '');
       const resetUrl = `${clientUrl}/reset-password/${resetToken}`;
 
       await sendPasswordResetEmail(user.email, resetUrl);

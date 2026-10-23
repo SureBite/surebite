@@ -142,7 +142,8 @@ export const getQrCode = async (req, res) => {
     }
 
     // Construct the public URL for the diner
-    const publicUrl = `${process.env.CLIENT_URL}/m/${menu.slug}`;
+    const baseUrl = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, '');
+    const publicUrl = `${baseUrl}/m/${menu.slug}`;
 
     // Generate both PNG and SVG formats as required by the frontend
     const qrPng = await QRCode.toDataURL(publicUrl, { width: 1024, margin: 2 });
