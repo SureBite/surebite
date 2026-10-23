@@ -95,14 +95,20 @@ SureBite standardizes allergen detection against **14 major canonical allergens*
 ### Core Business Problems Solved:
 
 The Liability of Human Error: Eliminates dangerous kitchen-to-floor verbal miscommunications and memory lapses during peak service rushes through standardized 14-allergen taxonomy and a strict server-enforced Human-in-the-Loop (HITL) gatekeeper.
+
 Operational Inefficiency: Resolves the 5–10 minute per table back-and-forth between waitstaff and chefs, unlocking 15–20% faster table turn rates and higher floor capacity during rush hours.
+
 Customer Friction for Dietary Restrictions: Eliminates social anxiety and interrogation friction for allergic, celiac, vegetarian, and dietary-restricted guests via private, zero-install mobile browsing.
+
 
 ### Impact on Business Profits (The ROI):
 
 Reduces Direct Labor Costs: Automated Gemini multimodal extraction removes hours of manual menu data entry; zero physical reprint or typesetting expenses.
+
 Captures the "Veto Vote" (Revenue Growth): Empowers the single dietary-restricted diner who decides where the entire 4–12 person group dines, directly driving high-ticket group party revenue.
+
 Protects the Bottom Line from Lawsuits (Risk Mitigation): Guards against catastrophic six- to seven-figure settlements, regulatory audits, and brand damage via auditable manager sign-offs and persistent cross-contact disclosures.
+
 Enables Dynamic Pricing: Allows instant price adjustments and 86'd item updates in the cloud while physical table QR codes remain persistent through permanent slug routing
 
 ---
