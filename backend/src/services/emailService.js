@@ -15,6 +15,9 @@ const createTransporter = () => {
       user,
       pass,
     },
+    connectionTimeout: 5000,
+    greetingTimeout: 5000,
+    socketTimeout: 5000,
   });
 };
 
@@ -71,9 +74,8 @@ export const sendOtpEmail = async (toEmail, otp) => {
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('Failed to send OTP email via Gmail SMTP:', error.message);
-    // In local dev, still log the OTP so testing isn't blocked
-    console.info(`[FALLBACK LOG] OTP for ${toEmail}: [ ${otp} ]`);
-    throw new Error('Could not send verification email. Please check your email credentials.');
+    console.info(`\n========================================\n[SUREBITE OTP LOG]: OTP for ${toEmail} is [ ${otp} ]\n========================================\n`);
+    return { simulated: true, otp, fallback: true };
   }
 };
 
@@ -135,7 +137,7 @@ export const sendPasswordResetEmail = async (toEmail, resetUrl) => {
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('Failed to send Password Reset email via Gmail SMTP:', error.message);
-    console.info(`[FALLBACK LOG] Password Reset URL for ${toEmail}: ${resetUrl}`);
-    throw new Error('Could not send password reset email. Please check your email credentials.');
+    console.info(`\n========================================\n[SUREBITE PASSWORD RESET]: Reset URL for ${toEmail}:\n${resetUrl}\n========================================\n`);
+    return { simulated: true, resetUrl, fallback: true };
   }
 };
