@@ -108,11 +108,12 @@ export const register = async (req, res) => {
     await Otp.create({ email: normalizedEmail, otp });
 
     // Send OTP email
-    await sendOtpEmail(normalizedEmail, otp);
+    const emailResult = await sendOtpEmail(normalizedEmail, otp);
 
     return res.status(201).json({
       message: 'Registration initiated. Please verify the 6-digit OTP sent to your email.',
       email: normalizedEmail,
+      ...(emailResult?.simulated ? { debugOtp: otp } : {}),
     });
   } catch (error) {
     return res.status(500).json({ message: error.message || 'Server registration error.' });
@@ -192,10 +193,11 @@ export const resendOtp = async (req, res) => {
     await Otp.deleteMany({ email: normalizedEmail });
     await Otp.create({ email: normalizedEmail, otp });
 
-    await sendOtpEmail(normalizedEmail, otp);
+    const emailResult = await sendOtpEmail(normalizedEmail, otp);
 
     return res.status(200).json({
       message: 'A fresh 6-digit verification code has been sent to your email.',
+      ...(emailResult?.simulated ? { debugOtp: otp } : {}),
     });
   } catch (error) {
     return res.status(500).json({ message: error.message || 'Failed to resend OTP.' });
@@ -271,6 +273,8 @@ export const forgotPassword = async (req, res) => {
     const normalizedEmail = email.toLowerCase().trim();
     const user = await User.findOne({ email: normalizedEmail });
 
+    let emailResult = null;
+    let resetUrl = null;
     if (user) {
       // Generate random reset token using native crypto module
       const resetToken = crypto.randomBytes(32).toString('hex');
@@ -285,14 +289,15 @@ export const forgotPassword = async (req, res) => {
 
       // Email the user a reset URL formatted like http://localhost:5173/reset-password/<plain_token>
       const clientUrl = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, '');
-      const resetUrl = `${clientUrl}/reset-password/${resetToken}`;
+      resetUrl = `${clientUrl}/reset-password/${resetToken}`;
 
-      await sendPasswordResetEmail(user.email, resetUrl);
+      emailResult = await sendPasswordResetEmail(user.email, resetUrl);
     }
 
     // Always return safe friendly message to prevent email enumeration attacks
     return res.status(200).json({
       message: 'If an account exists with that email, a password reset link has been sent.',
+      ...(emailResult?.simulated ? { debugResetUrl: resetUrl } : {}),
     });
   } catch (error) {
     return res.status(500).json({ message: error.message || 'Failed to process forgot password request.' });

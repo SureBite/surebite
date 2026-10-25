@@ -19,6 +19,7 @@ export function Auth() {
   const mode = searchParams.get('mode') // 'register' | 'forgot' | null (login)
   const [step, setStep] = useState('form') // 'form' | 'otp'
   const [pendingEmail, setPendingEmail] = useState('')
+  const [devOtp, setDevOtp] = useState('')
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -62,8 +63,13 @@ export function Auth() {
     setSubmitting(true)
     setFormError('')
     try {
-      await register(details)
+      const res = await register(details)
       setPendingEmail(details.email)
+      if (res?.debugOtp) {
+        setDevOtp(res.debugOtp)
+      } else {
+        setDevOtp('')
+      }
       setStep('otp')
     } catch (error) {
       setFormError(getErrorMessage(error))
@@ -88,7 +94,11 @@ export function Auth() {
 
   // Handle resending OTP code
   const handleResendOtp = async (email) => {
-    await resendOtp(email)
+    const res = await resendOtp(email)
+    if (res?.debugOtp) {
+      setDevOtp(res.debugOtp)
+    }
+    return res
   }
 
   // Handle Forgot Password submission
@@ -96,8 +106,8 @@ export function Auth() {
     setSubmitting(true)
     setFormError('')
     try {
-      await api.auth.forgotPassword({ email })
-      return true
+      const res = await api.auth.forgotPassword({ email })
+      return res || true
     } catch (error) {
       setFormError(getErrorMessage(error))
       return false
@@ -122,11 +132,13 @@ export function Auth() {
           {step === 'otp' ? (
             <OtpVerificationForm
               email={pendingEmail}
+              devOtp={devOtp}
               onVerify={handleVerifyOtp}
               onResend={handleResendOtp}
               onBackToRegister={() => {
                 setStep('form')
                 setFormError('')
+                setDevOtp('')
               }}
               submitting={submitting}
               error={formError}

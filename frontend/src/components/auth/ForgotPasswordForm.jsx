@@ -8,6 +8,7 @@ export function ForgotPasswordForm({ onSubmit, onGoToLogin, submitting, error })
   const [email, setEmail] = useState('')
   const [validationError, setValidationError] = useState('')
   const [submittedEmail, setSubmittedEmail] = useState('')
+  const [devResetUrl, setDevResetUrl] = useState('')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -24,9 +25,12 @@ export function ForgotPasswordForm({ onSubmit, onGoToLogin, submitting, error })
     }
 
     setValidationError('')
-    const ok = await onSubmit(cleanEmail.toLowerCase())
-    if (ok !== false) {
+    const res = await onSubmit(cleanEmail.toLowerCase())
+    if (res !== false) {
       setSubmittedEmail(cleanEmail)
+      if (res?.debugResetUrl) {
+        setDevResetUrl(res.debugResetUrl)
+      }
     }
   }
 
@@ -49,6 +53,21 @@ export function ForgotPasswordForm({ onSubmit, onGoToLogin, submitting, error })
             </p>
             <p className="mt-2 text-xs text-muted">⏳ The link is valid for 15 minutes.</p>
           </div>
+
+          {devResetUrl && (
+            <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-xs text-amber-950 text-left shadow-sm">
+              <span className="font-semibold text-amber-900">⚠️ Render Free Tier Note</span>
+              <p className="mt-1 text-amber-800 leading-relaxed">
+                SMTP ports are blocked on Render free tier. Use this direct reset link to choose a new password:
+              </p>
+              <a
+                href={devResetUrl}
+                className="mt-2 block break-all font-mono text-xs font-semibold text-brand underline hover:text-brand-dark"
+              >
+                {devResetUrl}
+              </a>
+            </div>
+          )}
 
           {/* Clear "Go to login/sign-in page" button */}
           <button

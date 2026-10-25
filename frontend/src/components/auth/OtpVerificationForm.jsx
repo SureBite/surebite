@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { ArrowLeft, CheckCircle2, KeyRound, Loader2, RotateCcw } from 'lucide-react'
 import Field from './Field'
 
-export function OtpVerificationForm({ email, onVerify, onResend, onBackToRegister, submitting, error }) {
+export function OtpVerificationForm({ email, devOtp, onVerify, onResend, onBackToRegister, submitting, error }) {
   const [otp, setOtp] = useState('')
   const [validationError, setValidationError] = useState('')
   const [resending, setResending] = useState(false)
@@ -57,6 +57,33 @@ export function OtpVerificationForm({ email, onVerify, onResend, onBackToRegiste
         We sent a 6-digit verification code to <strong className="text-ink">{email}</strong>.
         Enter it below to activate your account.
       </p>
+
+      {devOtp && (
+        <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50/90 p-4 text-xs text-amber-950 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-amber-900">⚠️ Render Free Tier Notice</span>
+            <button
+              type="button"
+              className="rounded bg-amber-200 px-2.5 py-1 text-xs font-semibold text-amber-950 hover:bg-amber-300 transition-colors cursor-pointer"
+              onClick={() => {
+                setOtp(devOtp)
+                if (validationError) setValidationError('')
+              }}
+            >
+              Auto-fill code
+            </button>
+          </div>
+          <p className="mt-1 text-amber-800 leading-relaxed">
+            Render free tier blocks SMTP email ports (465/587). For instant testing, your verification code is:
+          </p>
+          <div className="mt-2 font-mono text-xl font-bold tracking-widest text-amber-950">
+            {devOtp}
+          </div>
+          <p className="mt-1.5 text-[11px] text-amber-700">
+            (To receive real emails in your inbox on Render free tier, add a free <code>BREVO_API_KEY</code> in Render Environment Variables).
+          </p>
+        </div>
+      )}
 
       <form className="mt-6 space-y-4" onSubmit={handleSubmit} noValidate>
         {error && (
